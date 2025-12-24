@@ -42,8 +42,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         this.paddle = new Paddle(PADDLE_WIDTH, PADDLE_HEIGHT);
 
         // Create breakLayout Object
-        int rows = 3;
-        int col = 7;
+        int rows = 12;
+        int col = 10;
         this.bricks = new BrickLayout(rows, col);
 
         // This object will receive keyboard input
@@ -112,8 +112,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             paddle.moveRight();
         }
 
-        boolean collisionDetected = ball.collisionDetection(paddle);
-        if (!collisionDetected) {
+        boolean paddleCollision = ball.collisionDetection(paddle);
+        if (!paddleCollision) {
             ball.moveBall();
         }
         repaint();

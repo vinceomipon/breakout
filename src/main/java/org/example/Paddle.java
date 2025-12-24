@@ -38,7 +38,7 @@ public class Paddle {
     public Paddle(int width, int height) {
         this.paddleX = 250;
         this.paddleY = 450;
-        this.paddleSpeed = 1;
+        this.paddleSpeed = 5;
         this.paddleWidth = width;
         this.paddleHeight = height;
     }

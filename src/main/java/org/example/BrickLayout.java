@@ -1,7 +1,9 @@
 package org.example;
 
 import java.awt.*;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 
 public class BrickLayout {
 
@@ -22,11 +24,8 @@ public class BrickLayout {
 
         // Initially sets all bricks in the layout to true
         initializeMap( 0);
-        this.brickWidth = MAX_WIDTH / col;
-        this.brickHeight = MAX_HEIGHT / row;
-
-
-
+        this.brickWidth = (MAX_WIDTH - 40) / col;
+        this.brickHeight = 150 / row;
 
 
     }
@@ -47,6 +46,7 @@ public class BrickLayout {
         return initializeMap( index + 1);
     }
 
+
     public void draw(Graphics2D g) {
         recursiveDraw(g, 0);
     }
@@ -56,16 +56,41 @@ public class BrickLayout {
         int colIndex = index % this.cols;
         Point point = new Point(colIndex, rowIndex);
 
-        // Base case if out of bounds or brick is has already collided
-        if (index >= this.rows * this.cols || !this.brickMap.get(point)) {
+        // Base case if out of bounds or brick  has already collided
+        if (index >= this.rows * this.cols) {
             return false;
         }
 
         // Recursive step,
-        g.setColor(Color.white);
-        g.fillRect(rowIndex * brickWidth + 20, colIndex * brickHeight + 20, brickWidth, brickHeight);
+        if (this.brickMap.get(point)) {
+            g.setColor(Color.white);
+            g.fillRect(colIndex * brickWidth + 20, rowIndex * brickHeight + 20, brickWidth, brickHeight);
+
+            // Draw the borders to separate bricks
+            g.setStroke(new BasicStroke(3));
+            g.setColor(Color.black);
+            g.drawRect(colIndex * brickWidth + 20, rowIndex * brickHeight + 20, brickWidth, brickHeight);
+        }
+
 
         return recursiveDraw(g,index + 1);
+    }
 
+    // Immutable getter methods
+
+    public int getBrickHeight() {
+        return brickHeight;
+    }
+    public int getBrickWidth() {
+        return brickWidth;
+    }
+    public int getRows() {
+        return rows;
+    }
+    public int getCols() {
+        return cols;
+    }
+    public Map<Point, Boolean> getBrickMap() {
+        return Collections.unmodifiableMap(this.brickMap);
     }
 }

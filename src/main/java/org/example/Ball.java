@@ -2,6 +2,10 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Ball extends JPanel {
 
@@ -146,13 +150,29 @@ public class Ball extends JPanel {
     }
 
     public boolean collisionDetection(Paddle paddle) {
+
+        if (paddleCollision(paddle)) {
+            return true;
+        }
+
+
+
+
+
+        return false;
+    }
+
+    private boolean paddleCollision(Paddle paddle) {
         int paddleX = paddle.getPaddleX();
         int paddleY = paddle.getPaddleY();
         int paddleWidth = paddle.getPaddleWidth();
         int paddleHeight = paddle.getPaddleHeight();
+        Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
+        Rectangle paddleRect = new Rectangle(paddleX, paddleY, paddleWidth, paddleHeight);
 
-        if(new Rectangle(ballX, ballY, DEFAULT_BALLSIZE, DEFAULT_BALLSIZE)
-                .intersects(new Rectangle(paddleX, paddleY, paddleWidth, paddleHeight))) {
+        // if ball intersects with paddle
+        if(ballRect
+                .intersects(paddleRect)) {
             System.out.println("Collision Detected");
             ballSpeedY = -ballSpeedY;
             ballY = paddleY - DEFAULT_BALLSIZE;
@@ -161,6 +181,22 @@ public class Ball extends JPanel {
 
 
         return false;
+    }
+
+    private boolean brickCollision(BrickLayout brickLayout) {
+        Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
+        Map<Point, Boolean> brickGrid = brickLayout.getBrickMap();
+        int brickWidth = brickLayout.getBrickWidth();
+        int brickHeight = brickLayout.getBrickHeight();
+
+        // Convert the brick stored in a 2d grid to its actual pixel space
+        Map<Point, Rectangle> brickMap = brickGrid.keySet().stream().
+                map(p -> new Point(p.x * brickWidth + 20, p.y * brickHeight + 20)).
+                collect(Collectors.toSet());
+
+
+
+
     }
 
 
