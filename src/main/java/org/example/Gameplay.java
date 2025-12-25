@@ -19,6 +19,9 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private javax.swing.Timer timer;
     private boolean moveLeft;
     private boolean moveRight;
+    private int lives;
+
+    private boolean gameOver;
 
     // Constants to be used
     public static final int MAX_WIDTH = 500;
@@ -42,8 +45,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         this.paddle = new Paddle(PADDLE_WIDTH, PADDLE_HEIGHT);
 
         // Create breakLayout Object
-        int rows = 12;
-        int col = 10;
+        int rows = 8;
+        int col = 12;
         this.bricks = new BrickLayout(rows, col);
 
         // This object will receive keyboard input
@@ -55,6 +58,11 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         // Set both flags to false
         this.moveLeft = false;
         this.moveRight = false;
+
+        // Set game over to false
+        this.gameOver = false;
+
+        this.lives = 3;
 
         // Set-up an event-driven timer to receive inputs
         // it fires every 10 ms
@@ -83,6 +91,23 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         // Paints the bricklayout
         Graphics2D g2d = (Graphics2D) g;
         bricks.draw(g2d);
+
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Monospace", Font.BOLD, 10));
+        g.drawString("Lives: " + this.lives, 10, 10);
+
+        // if the game is over
+        if (gameOver) {
+            handleGameOver(g);
+        }
+    }
+
+    private void handleGameOver(Graphics g) {
+        // Clear the screen and print game over
+        super.paintComponent(g);
+        g.setFont(new Font("Arial", Font.BOLD, 40));
+        g.drawString("GAME OVER", 200, 200);
+
     }
 
     /**
@@ -105,6 +130,10 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
      */
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (gameOver) {
+            return;
+        }
+
         if (moveLeft) {
             paddle.moveLeft();
         }
@@ -112,11 +141,27 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             paddle.moveRight();
         }
 
-        boolean paddleCollision = ball.collisionDetection(paddle);
-        if (!paddleCollision) {
-            ball.moveBall();
+        ball.collisionDetection(paddle, bricks);
+        boolean outOfBounds = ball.moveBall();
+
+        if (outOfBounds) {
+            handleLives();
         }
+
         repaint();
+    }
+
+    // Helper method to handle the logic after user reaches out of bounds
+    private void handleLives() {
+        this.lives--;
+
+        // If lives is negative set game over to true
+        if (lives <= 0) {
+            gameOver = true;
+        } else {
+            // resets ball position to default position
+            ball.setBallPosition();
+        }
     }
 
     /**

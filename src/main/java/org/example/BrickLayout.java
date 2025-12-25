@@ -93,4 +93,21 @@ public class BrickLayout {
     public Map<Point, Boolean> getBrickMap() {
         return Collections.unmodifiableMap(this.brickMap);
     }
+
+    // Mutating functions
+
+    /**
+     * Sets the specified entry of the map to false which
+     * signifies when a collision occurs
+     * @param point The key to search for in the map
+     * @return true if object contains point and is set to false, false otherwise
+     */
+    public boolean updateBrickEntry (Point point) {
+        if (this.brickMap.containsKey(point)) {
+            this.brickMap.put(point, false);
+            return true;
+        }
+
+        return false;
+    }
 }

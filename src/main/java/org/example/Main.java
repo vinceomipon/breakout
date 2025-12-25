@@ -10,7 +10,7 @@ import java.awt.*;
 public class Main {
     // main function
     // Constants for window
-    public static final int MAX_WIDTH = 500;
+    public static final int MAX_WIDTH = 515;
     public static final int MAX_HEIGHT = 500;
 
     public static void main(String[] args)
@@ -25,7 +25,7 @@ public class Main {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Don't allow for resize
-        frame.setResizable(true);
+        frame.setResizable(false);
 
         Gameplay gp = new Gameplay();
         frame.add(gp);

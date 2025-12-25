@@ -18,8 +18,8 @@ public class Ball extends JPanel {
     private int ballSize;
 
     // Default values to set the fields if client does not set manually
-    public static final int DEFAULT_X = 50;
-    public static final int DEFAULT_Y = 50;
+    public static final int DEFAULT_X = 250;
+    public static final int DEFAULT_Y = 300;
     public static final int DEFAULT_SPEEDX = 2;
     public static final int DEFAULT_SPEEDY = 2;
     public static final int DEFAULT_BALLSIZE = 20;
@@ -113,14 +113,23 @@ public class Ball extends JPanel {
      */
     public int getBallSize() { return ballSize; }
 
+    public void setBallPosition() {
+        this.ballX = DEFAULT_X;
+        this.ballY = DEFAULT_Y;
+    }
+
     /**
      * Updates the position of the ball based on its current speed
      */
-    public void moveBall() {
+    public boolean moveBall() {
         // Update the ball based on the current direction of the ballSpeed
         ballX += ballSpeedX;
         ballY += ballSpeedY;
-        edgeCases();
+        System.out.println("Ball X: " + ballX + " Ball Y: " + ballY);
+
+        // check if ball hit bottom or not
+        return edgeCases();
+
     }
 
     /**
@@ -128,17 +137,26 @@ public class Ball extends JPanel {
      * Specifically, if it hits the x boundaries of the frame, it will
      * invert the ballSpeedX by multiply it by -1. The logic is similar
      * for the y direction
+     * @return false if the edge is the bottom edge, true otherwise
      */
-    private void edgeCases() {
+    private boolean edgeCases() {
 
         if (ballX <= 0 || ballX >= MAX_WIDTH) {
             ballSpeedX *= -1;
+            return false;
         }
 
-        if (ballY <= 0 || ballY >= MAX_HEIGHT) {
+        if (ballY <= 0) {
             ballSpeedY *= -1;
+            return false;
         }
 
+        // if past bottom boundary
+        if (ballY >= MAX_HEIGHT) {
+            return true;
+        }
+
+        return false;
     }
 
     public void draw(Graphics g) {
@@ -149,17 +167,9 @@ public class Ball extends JPanel {
         g2d.fillOval(ballX, ballY, ballSize, ballSize);
     }
 
-    public boolean collisionDetection(Paddle paddle) {
+    public boolean collisionDetection(Paddle paddle, BrickLayout brickLayout) {
 
-        if (paddleCollision(paddle)) {
-            return true;
-        }
-
-
-
-
-
-        return false;
+        return brickCollision(brickLayout) || paddleCollision(paddle);
     }
 
     private boolean paddleCollision(Paddle paddle) {
@@ -190,12 +200,56 @@ public class Ball extends JPanel {
         int brickHeight = brickLayout.getBrickHeight();
 
         // Convert the brick stored in a 2d grid to its actual pixel space
-        Map<Point, Rectangle> brickMap = brickGrid.keySet().stream().
-                map(p -> new Point(p.x * brickWidth + 20, p.y * brickHeight + 20)).
-                collect(Collectors.toSet());
+        Map<Point, Rectangle> brickMap = brickGrid.entrySet().stream().
+                filter(Map.Entry::getValue).
+                map(Map.Entry::getKey).
+                collect(Collectors.toMap(
+                        p -> p,
+                        p -> {
+                            int brickX = p.x * brickWidth + 20;
+                            int brickY = p.y * brickHeight + 20;
+                            return new Rectangle(brickX, brickY, brickWidth, brickHeight);
+                        }
+                ));
+
+
+        // Check if the ball collided with any paddle
+        Map.Entry<Point, Rectangle> collisionBlock = brickMap.entrySet().stream().
+                filter(e -> e.getValue().intersects(ballRect)).
+                findFirst().
+                orElse(null);
+
+        // return null if the ball did not collide with any rectangle
+        if (collisionBlock == null) {
+            return false;
+        }
+
+        // If the ball did collide handle bounce
+        handleBounce(ballRect, collisionBlock.getValue());
 
 
 
+
+        // Set the specified brick at point x,y to false
+        brickLayout.updateBrickEntry(collisionBlock.getKey());
+
+        repaint();
+        return true;
+
+    }
+
+    private void handleBounce(Rectangle ball, Rectangle brick) {
+        // Intersection tells us where the ball intersected with the brick
+        Rectangle intersection = ball.intersection(brick);
+
+        if (intersection.width < intersection.height) {
+            // Side collision detected
+            ballSpeedX *= -1;
+
+        } else {
+            // else top or bottom collision detected
+            ballSpeedY *= -1;
+        }
 
     }
 
