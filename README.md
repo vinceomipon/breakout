@@ -22,7 +22,7 @@ This implementation of Breakout can be improved in many ways
 * Implement different colours for different rows of bricks to indicate the number of points that the brick is worth (ex. Red = 3, Green = 2, Blue = 1, etc.)
 * Increase the speed of the ball as the number of points increases to increase difficulty.
 
-Below is a sample of the gameplay, I hope you enjoy it!
-![Breakout]([https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif](https://imgur.com/a/d1v2gUE))
+Below is a sample of the gameplay, I hope you enjoy it!<br><br>
+![Image](https://github.com/user-attachments/assets/90b11a0f-10be-441a-beca-f074db6142b2)
 
    
