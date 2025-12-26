@@ -9,6 +9,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
@@ -20,8 +22,10 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     private boolean moveLeft;
     private boolean moveRight;
     private int lives;
+    private int score;
 
     private boolean gameOver;
+    private boolean gameWon;
 
     // Constants to be used
     public static final int MAX_WIDTH = 500;
@@ -40,13 +44,13 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         this.ball = new Ball();
 
         // Creates a paddle object
-        int PADDLE_HEIGHT = 8;
-        int PADDLE_WIDTH = 100;
-        this.paddle = new Paddle(PADDLE_WIDTH, PADDLE_HEIGHT);
+        int paddleHeight = 8;
+        int paddleWidth = 100;
+        this.paddle = new Paddle(paddleWidth, paddleHeight);
 
         // Create breakLayout Object
-        int rows = 8;
-        int col = 12;
+        int rows = 1;
+        int col = 1;
         this.bricks = new BrickLayout(rows, col);
 
         // This object will receive keyboard input
@@ -61,8 +65,11 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
 
         // Set game over to false
         this.gameOver = false;
+        this.gameWon = false;
 
         this.lives = 3;
+
+        this.score = 0;
 
         // Set-up an event-driven timer to receive inputs
         // it fires every 10 ms
@@ -96,17 +103,43 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         g.setFont(new Font("Monospace", Font.BOLD, 10));
         g.drawString("Lives: " + this.lives, 10, 10);
 
+        g.drawString("Score: " + this.score, 450, 10);
+
         // if the game is over
         if (gameOver) {
             handleGameOver(g);
         }
+
+        if (gameWon) {
+            handleGameWon(g);
+        }
     }
 
+    /**
+     * Displays "GAME WON" message with restart instruction.
+     *
+     * @param g the Graphics context used for drawing
+     */
+    private void handleGameWon(Graphics g) {
+        super.paintComponent(g);
+        g.setFont(new Font("Arial", Font.BOLD, 40));
+        g.drawString("GAME WON", 125, 200);
+        g.setFont(new Font("Arial", Font.BOLD, 10));
+        g.drawString("Press enter to continue", 200, 300);
+    }
+
+    /**
+     * Displays "GAME OVER" message with restart instruction.
+     *
+     * @param g the Graphics context used for drawing
+     */
     private void handleGameOver(Graphics g) {
         // Clear the screen and print game over
         super.paintComponent(g);
         g.setFont(new Font("Arial", Font.BOLD, 40));
-        g.drawString("GAME OVER", 200, 200);
+        g.drawString("GAME OVER", 125, 200);
+        g.setFont(new Font("Arial", Font.BOLD, 10));
+        g.drawString("Press enter to continue", 200, 300);
 
     }
 
@@ -131,6 +164,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (gameOver) {
+            ball.setBallSpeedX(0);
+            ball.setBallSpeedY(0);
             return;
         }
 
@@ -141,14 +176,136 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             paddle.moveRight();
         }
 
-        ball.collisionDetection(paddle, bricks);
+
         boolean outOfBounds = ball.moveBall();
+        this.collisionDetection();
 
         if (outOfBounds) {
             handleLives();
         }
 
+        boolean allBricksCleared = this.bricks.bricksCleared();
+
+        if (allBricksCleared) {
+            this.gameWon = true;
+        }
+
+
+
         repaint();
+    }
+
+    /**
+     * Checks for collisions between ball and paddle or bricks.
+     *
+     * @return true if any collision was detected, false otherwise
+     */
+    public boolean collisionDetection() {
+
+        return brickCollision() || paddleCollision();
+    }
+
+    /**
+     * Checks if ball hit the paddle and bounces it upward.
+     *
+     * @return true if collision occurred, false otherwise
+     */
+    private boolean paddleCollision() {
+        int ballX = ball.getBallX();
+        int ballY = ball.getBallY();
+        int ballSize = ball.getBallSize();
+        int paddleX = paddle.getPaddleX();
+        int paddleY = paddle.getPaddleY();
+        int paddleWidth = paddle.getPaddleWidth();
+        int paddleHeight = paddle.getPaddleHeight();
+        Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
+        Rectangle paddleRect = new Rectangle(paddleX, paddleY, paddleWidth, paddleHeight);
+
+        // if ball intersects with paddle
+        if (ballRect.intersects(paddleRect)) {
+            System.out.println("Collision Detected");
+            ball.setBallSpeedY(ball.getBallSpeedY() * -1);
+            ball.setBallY(paddleY - ball.getBallSize());
+            return true;
+        }
+
+
+        return false;
+    }
+
+    /**
+     * Checks if ball hit any brick, removes the brick, and increments score.
+     *
+     * @return true if collision with any brick occurred, false otherwise
+     */
+    private boolean brickCollision() {
+        int ballX = ball.getBallX();
+        int ballY = ball.getBallY();
+        int ballSize = ball.getBallSize();
+        Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
+        Map<Point, Boolean> brickGrid = this.bricks.getBrickMap();
+        int brickWidth = this.bricks.getBrickWidth();
+        int brickHeight = this.bricks.getBrickHeight();
+
+        // Convert the brick stored in a 2d grid to its actual pixel space
+        Map<Point, Rectangle> brickMap = brickGrid.entrySet().stream().
+                filter(Map.Entry::getValue).
+                map(Map.Entry::getKey).
+                collect(Collectors.toMap(
+                        p -> p,
+                        p -> {
+                            int brickX = p.x * brickWidth + 20;
+                            int brickY = p.y * brickHeight + 20;
+                            return new Rectangle(brickX, brickY, brickWidth, brickHeight);
+                        }
+                ));
+
+
+        // Check if the ball collided with any paddle
+        Map.Entry<Point, Rectangle> collisionBlock = brickMap.entrySet().stream().
+                filter(e -> e.getValue().intersects(ballRect)).
+                findFirst().
+                orElse(null);
+
+        // return null if the ball did not collide with any rectangle
+        if (collisionBlock == null) {
+            return false;
+        }
+
+        // If the ball did collide handle bounce
+        handleBounce(ballRect, collisionBlock.getValue());
+
+
+
+
+        // Set the specified brick at point x,y to false
+        this.bricks.updateBrickEntry(collisionBlock.getKey());
+
+        ++this.score;
+        repaint();
+        return true;
+
+    }
+
+    /**
+     * Reverses ball velocity based on which side of the brick was hit.
+     *
+     * @param ballRect the Rectangle representing the ball's bounds
+     * @param brick the Rectangle representing the brick's bounds
+     */
+    private void handleBounce(Rectangle ballRect, Rectangle brick) {
+        // Intersection tells us where the ball intersected with the brick
+        Rectangle intersection = ballRect.intersection(brick);
+
+        if (intersection.width < intersection.height) {
+            // Side collision detected
+            this.ball.setBallSpeedX(this.ball.getBallSpeedX() * -1);
+
+        } else {
+            // else top or bottom collision detected
+            this.ball.setBallSpeedY(this.ball.getBallSpeedY() * -1);
+        }
+
     }
 
     // Helper method to handle the logic after user reaches out of bounds
@@ -160,8 +317,27 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             gameOver = true;
         } else {
             // resets ball position to default position
-            ball.setBallPosition();
+            ball.defaultBallPosition();
+            ball.setBallSpeedX(2);
+            ball.setBallSpeedY(2);
+            paddle.resetPaddlePosition();
         }
+    }
+
+    // Resets the game when the users presses enter on keyboard
+    private void resetGame() {
+
+        // re-initializes the variables
+        this.gameOver = false;
+        this.gameWon = false;
+        this.score = 0;
+        this.lives = 3;
+        ball.defaultBallPosition();
+        ball.setBallSpeedX(2);
+        ball.setBallSpeedY(2);
+        bricks.initializeMap(0);
+        paddle.resetPaddlePosition();
+
     }
 
     /**
@@ -178,6 +354,8 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
             moveRight = true;
             System.out.println("Key pressed: " + e.getKeyCode());
         }
+
+
     }
 
     /**
@@ -193,6 +371,10 @@ public class Gameplay extends JPanel implements KeyListener, ActionListener {
         if (e.getKeyCode() == KeyEvent.VK_D) {
             moveRight = false;
         }
+        if (e.getKeyCode() == KeyEvent.VK_R && (gameOver || gameWon)) {
+            resetGame();
+        }
+
     }
 
     @Override

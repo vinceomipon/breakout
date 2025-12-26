@@ -2,15 +2,10 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 public class Ball extends JPanel {
 
     // These fields specify the ball's position and speed as well as size
-    // Since it is 2 d we have respective X and Y coordiantes
+    // Since it is 2 d we have respective X and Y coordinates
     private int ballX;
     private int ballY;
     private int ballSpeedX;
@@ -19,7 +14,7 @@ public class Ball extends JPanel {
 
     // Default values to set the fields if client does not set manually
     public static final int DEFAULT_X = 250;
-    public static final int DEFAULT_Y = 300;
+    public static final int DEFAULT_Y = 250;
     public static final int DEFAULT_SPEEDX = 2;
     public static final int DEFAULT_SPEEDY = 2;
     public static final int DEFAULT_BALLSIZE = 20;
@@ -51,7 +46,7 @@ public class Ball extends JPanel {
         this.ballSize = ballSize;
 
         // Timer to update the game very 10 milliseconds
-        Timer timer = new Timer(10,e -> {
+        Timer timer = new Timer(10, e -> {
             moveBall();
             repaint();
         });
@@ -68,7 +63,7 @@ public class Ball extends JPanel {
         this.ballSpeedX = DEFAULT_SPEEDX;
         this.ballSpeedY = DEFAULT_SPEEDY;
         this.ballSize = DEFAULT_BALLSIZE;
-        Timer timer = new Timer(10,e -> {
+        Timer timer = new Timer(10, e -> {
             moveBall();
             repaint();
         });
@@ -111,11 +106,49 @@ public class Ball extends JPanel {
      * Gets the size of the ball
      * @return the value of the size of the ball
      */
-    public int getBallSize() { return ballSize; }
+    public int getBallSize() {
+        return ballSize;
+    }
 
-    public void setBallPosition() {
+    public void defaultBallPosition() {
         this.ballX = DEFAULT_X;
         this.ballY = DEFAULT_Y;
+    }
+
+    /**
+     * Sets the ball's x-coordinate.
+     *
+     * @param ballX the new x-coordinate
+     */
+    public void setBallX(int ballX) {
+        this.ballX = ballX;
+    }
+
+    /**
+     * Sets the ball's y-coordinate.
+     *
+     * @param ballY the new y-coordinate
+     */
+    public void setBallY(int ballY) {
+        this.ballY = ballY;
+    }
+
+    /**
+     * Sets the ball's horizontal speed.
+     *
+     * @param ballSpeedX the new horizontal speed
+     */
+    public void setBallSpeedX(int ballSpeedX) {
+        this.ballSpeedX = ballSpeedX;
+    }
+
+    /**
+     * Sets the ball's vertical speed.
+     *
+     * @param ballSpeedY the new vertical speed
+     */
+    public void setBallSpeedY(int ballSpeedY) {
+        this.ballSpeedY = ballSpeedY;
     }
 
     /**
@@ -159,98 +192,17 @@ public class Ball extends JPanel {
         return false;
     }
 
+    /**
+     * Draws the ball as an orange circle with anti-aliasing enabled.
+     *
+     * @param g the Graphics context used for drawing
+     */
     public void draw(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.setColor(Color.ORANGE);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                 RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.fillOval(ballX, ballY, ballSize, ballSize);
-    }
-
-    public boolean collisionDetection(Paddle paddle, BrickLayout brickLayout) {
-
-        return brickCollision(brickLayout) || paddleCollision(paddle);
-    }
-
-    private boolean paddleCollision(Paddle paddle) {
-        int paddleX = paddle.getPaddleX();
-        int paddleY = paddle.getPaddleY();
-        int paddleWidth = paddle.getPaddleWidth();
-        int paddleHeight = paddle.getPaddleHeight();
-        Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
-        Rectangle paddleRect = new Rectangle(paddleX, paddleY, paddleWidth, paddleHeight);
-
-        // if ball intersects with paddle
-        if(ballRect
-                .intersects(paddleRect)) {
-            System.out.println("Collision Detected");
-            ballSpeedY = -ballSpeedY;
-            ballY = paddleY - DEFAULT_BALLSIZE;
-            return true;
-        }
-
-
-        return false;
-    }
-
-    private boolean brickCollision(BrickLayout brickLayout) {
-        Rectangle ballRect = new Rectangle(ballX, ballY, ballSize, ballSize);
-        Map<Point, Boolean> brickGrid = brickLayout.getBrickMap();
-        int brickWidth = brickLayout.getBrickWidth();
-        int brickHeight = brickLayout.getBrickHeight();
-
-        // Convert the brick stored in a 2d grid to its actual pixel space
-        Map<Point, Rectangle> brickMap = brickGrid.entrySet().stream().
-                filter(Map.Entry::getValue).
-                map(Map.Entry::getKey).
-                collect(Collectors.toMap(
-                        p -> p,
-                        p -> {
-                            int brickX = p.x * brickWidth + 20;
-                            int brickY = p.y * brickHeight + 20;
-                            return new Rectangle(brickX, brickY, brickWidth, brickHeight);
-                        }
-                ));
-
-
-        // Check if the ball collided with any paddle
-        Map.Entry<Point, Rectangle> collisionBlock = brickMap.entrySet().stream().
-                filter(e -> e.getValue().intersects(ballRect)).
-                findFirst().
-                orElse(null);
-
-        // return null if the ball did not collide with any rectangle
-        if (collisionBlock == null) {
-            return false;
-        }
-
-        // If the ball did collide handle bounce
-        handleBounce(ballRect, collisionBlock.getValue());
-
-
-
-
-        // Set the specified brick at point x,y to false
-        brickLayout.updateBrickEntry(collisionBlock.getKey());
-
-        repaint();
-        return true;
-
-    }
-
-    private void handleBounce(Rectangle ball, Rectangle brick) {
-        // Intersection tells us where the ball intersected with the brick
-        Rectangle intersection = ball.intersection(brick);
-
-        if (intersection.width < intersection.height) {
-            // Side collision detected
-            ballSpeedX *= -1;
-
-        } else {
-            // else top or bottom collision detected
-            ballSpeedY *= -1;
-        }
-
     }
 
 

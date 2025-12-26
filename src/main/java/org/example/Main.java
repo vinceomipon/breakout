@@ -1,7 +1,4 @@
 package org.example;
-
-import org.example.Gameplay;
-
 import javax.swing.*;
 import java.awt.*;
 
@@ -13,13 +10,12 @@ public class Main {
     public static final int MAX_WIDTH = 515;
     public static final int MAX_HEIGHT = 500;
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         // Create a JFrame object
         JFrame frame = new JFrame("Breakout");
 
         // Set the size of JFrame
-        frame.setSize(MAX_WIDTH,MAX_HEIGHT);
+        frame.setSize(MAX_WIDTH, MAX_HEIGHT);
 
         // Close the JFrame
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
